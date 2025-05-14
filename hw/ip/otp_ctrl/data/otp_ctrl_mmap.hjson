@@ -1,0 +1,727 @@
+// Copyright lowRISC contributors (OpenTitan project).
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+//
+// Use the gen-otp-mmap.py script to update dependent files (like documentation
+// tables the comportable hjson and metadata SV package):
+//
+// $ ./util/design/gen-otp-mmap.py
+//
+// Make sure to regenerate the CSRs after converting the memory map:
+//
+// $ cd ${PROJ_ROOT}
+// $ make -C hw regs
+//
+
+{
+    // 256 bit seed to be used for generation of partition item default values.
+    // Can be overridden on the command line with the --seed switch.
+    seed: "36021179872380457113239299468132194022238108125576166239904535336103582949069"
+
+    otp: {
+        width: "2", // bytes
+        depth: "1024"
+    }
+
+    // Definition of scrambling and digest constants and keys.
+    scrambling: {
+        key_size:  "16",
+        iv_size:   "8",
+        cnst_size: "16",
+        keys: [
+            {
+                name:  "Secret0Key",
+                value: "<random>",
+            }
+            {
+                name:  "Secret1Key",
+                value: "<random>",
+            }
+            {
+                name:  "Secret2Key",
+                value: "<random>",
+            }
+        ]
+        digests: [
+            // This is the consistency digest used by all partitions.
+            {
+                name:       "CnstyDigest",
+                iv_value:   "<random>",
+                cnst_value: "<random>",
+            }
+            // The other digest configurations below are used for
+            // key derivation and token hashing.
+            {
+                name:       "FlashDataKey",
+                iv_value:   "<random>",
+                cnst_value: "<random>",
+            }
+            {
+                name:       "FlashAddrKey",
+                iv_value:   "<random>",
+                cnst_value: "<random>",
+            }
+            {
+                name:       "SramDataKey",
+                iv_value:   "<random>",
+                cnst_value: "<random>",
+            }
+        ]
+    }
+
+    // The enumeration order below defines the address map of the OTP controller,
+    // if the offsets are not defined explicitly via the "offset" key.
+    // Note that the digest items are added automatically to the address map.
+    partitions: [
+        {
+            name:       "VENDOR_TEST",
+            variant:    "Unbuffered",
+            size:       "64", // in bytes
+            secret:     false,
+            sw_digest:  true,
+            hw_digest:  false,
+            write_lock: "Digest",
+            read_lock:  "CSR",
+            key_sel:    "NoKey",
+            integrity:  false, // Do not use integrity (ECC) on this partition.
+            bkout_type: false, // Do not generate a breakout type for this partition.
+            items: [
+                {
+                    name: "SCRATCH",
+                    size: "56"
+                }
+            ],
+            desc: '''Vendor test partition.
+            This is reserved for manufacturing smoke checks. The OTP wrapper
+            control logic inside prim_otp is allowed to read/write to this
+            region. ECC uncorrectable errors seen on the functional prim_otp
+            interface will not lead to an alert for this partition.
+            Instead, such errors will be reported as correctable ECC errors.
+            '''
+        }
+        {
+            name:       "CREATOR_SW_CFG",
+            variant:    "Unbuffered",
+            absorb:     true,
+            secret:     false,
+            sw_digest:  true,
+            hw_digest:  false,
+            write_lock: "Digest",
+            read_lock:  "CSR",
+            key_sel:    "NoKey",
+            integrity:  true,  // Use integrity (ECC) on this partition.
+            bkout_type: false, // Do not generate a breakout type for this partition.
+            items: [
+                {
+                    name: "CREATOR_SW_CFG_AST_CFG",
+                    size: "156"
+                }
+                {
+                    name: "CREATOR_SW_CFG_AST_INIT_EN",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_ROM_EXT_SKU",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_SIGVERIFY_RSA_MOD_EXP_IBEX_EN",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_SIGVERIFY_RSA_KEY_EN",
+                    size: "8"
+                }
+                {
+                    name: "CREATOR_SW_CFG_SIGVERIFY_SPX_EN",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_SIGVERIFY_SPX_KEY_EN",
+                    size: "8"
+                }
+                {
+                    name: "CREATOR_SW_CFG_FLASH_DATA_DEFAULT_CFG",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_FLASH_INFO_BOOT_DATA_CFG",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_FLASH_HW_INFO_CFG_OVERRIDE",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_EN",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_JITTER_EN",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RET_RAM_RESET_MASK",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_MANUF_STATE",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_ROM_EXEC_EN",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_CPUCTRL",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_MIN_SEC_VER_ROM_EXT",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_MIN_SEC_VER_BL0",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_DEFAULT_BOOT_DATA_IN_PROD_EN",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RMA_SPIN_EN",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RMA_SPIN_CYCLES",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_REPCNT_THRESHOLDS",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_REPCNTS_THRESHOLDS",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_ADAPTP_HI_THRESHOLDS",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_ADAPTP_LO_THRESHOLDS",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_BUCKET_THRESHOLDS",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_MARKOV_HI_THRESHOLDS",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_MARKOV_LO_THRESHOLDS",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_EXTHT_HI_THRESHOLDS",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_EXTHT_LO_THRESHOLDS",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_ALERT_THRESHOLD",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_RNG_HEALTH_CONFIG_DIGEST",
+                    size: "4"
+                }
+                {
+                    name: "CREATOR_SW_CFG_SRAM_KEY_RENEW_EN",
+                    size: "4"
+                }
+            ],
+            desc: '''Software configuration partition.
+            This is for device-specific calibration data. For example, clock,
+            LDO, RNG.
+            '''
+        }
+        {
+            name:       "OWNER_SW_CFG",
+            variant:    "Unbuffered",
+            absorb:     true,
+            secret:     false,
+            sw_digest:  true,
+            hw_digest:  false,
+            write_lock: "Digest",
+            read_lock:  "CSR",
+            key_sel:    "NoKey",
+            integrity:  true,
+            bkout_type: false,
+            items: [
+                {
+                    name: "OWNER_SW_CFG_ROM_ERROR_REPORTING",
+                    size: "4"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_BOOTSTRAP_DIS",
+                    size: "4"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_ALERT_CLASS_EN",
+                    size: "4"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_ALERT_ESCALATION",
+                    size: "4"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_ALERT_CLASSIFICATION",
+                    size: "320"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_LOCAL_ALERT_CLASSIFICATION",
+                    size: "64"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_ALERT_ACCUM_THRESH",
+                    size: "16"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_ALERT_TIMEOUT_CYCLES",
+                    size: "16"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_ALERT_PHASE_CYCLES",
+                    size: "64"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_ALERT_DIGEST_PROD",
+                    size: "4",
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_ALERT_DIGEST_PROD_END",
+                    size: "4",
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_ALERT_DIGEST_DEV",
+                    size: "4",
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_ALERT_DIGEST_RMA",
+                    size: "4",
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_WATCHDOG_BITE_THRESHOLD_CYCLES",
+                    size: "4"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_KEYMGR_ROM_EXT_MEAS_EN",
+                    size: "4"
+                }
+                {
+                    name: "OWNER_SW_CFG_MANUF_STATE",
+                    size: "4"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_RSTMGR_INFO_EN",
+                    size: "4"
+                }
+                {
+                    name: "OWNER_SW_CFG_ROM_EXT_BOOTSTRAP_EN",
+                    size: "4"
+                }
+            ],
+            desc: '''Software configuration partition.
+            This contains data that changes software behavior in the ROM, for
+            example enabling defensive features in ROM or selecting failure
+            modes if verification fails.
+            '''
+        }
+        {
+                    name:       "ROT_CREATOR_AUTH_CODESIGN",
+                    variant:    "Unbuffered",
+                    absorb:     false,
+                    secret:     false,
+                    sw_digest:  true,
+                    hw_digest:  false,
+                    write_lock: "Digest",
+                    read_lock:  "CSR",
+                    key_sel:    "NoKey",
+                    integrity:  true,
+                    bkout_type: false,
+                    items: [
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_ECDSA_KEY_TYPE0",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_ECDSA_KEY0",
+                            size: "64"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_ECDSA_KEY_TYPE1",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_ECDSA_KEY1",
+                            size: "64"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_ECDSA_KEY_TYPE2",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_ECDSA_KEY2",
+                            size: "64"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_ECDSA_KEY_TYPE3",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_ECDSA_KEY3",
+                            size: "64"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY_TYPE0",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY0",
+                            size: "32"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY_CONFIG0",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY_TYPE1",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY1",
+                            size: "32"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY_CONFIG1",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY_TYPE2",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY2",
+                            size: "32"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY_CONFIG2",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY_TYPE3",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY3",
+                            size: "32"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_SPX_KEY_CONFIG3",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_CODESIGN_BLOCK_SHA2_256_HASH",
+                            size: "32"
+                        }
+                   ]
+                   desc: '''
+                         This OTP partition is used to store four P-256 keys
+                         and four Sphincs+ keys. The partition requires 464
+                         bytes of software visible storage. The partition is
+                         locked at manufacturing time to protect against
+                         malicious write attempts.
+                         '''
+        }
+        {
+                    name:       "ROT_CREATOR_AUTH_STATE",
+                    variant:    "Unbuffered",
+                    absorb:     false,
+                    secret:     false,
+                    sw_digest:  true,
+                    hw_digest:  false,
+                    write_lock: "Digest",
+                    read_lock:  "CSR",
+                    key_sel:    "NoKey",
+                    integrity:  true,
+                    bkout_type: false,
+                    items: [
+                        {
+                            name: "ROT_CREATOR_AUTH_STATE_ECDSA_KEY0",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_STATE_ECDSA_KEY1",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_STATE_ECDSA_KEY2",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_STATE_ECDSA_KEY3",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_STATE_SPX_KEY0",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_STATE_SPX_KEY1",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_STATE_SPX_KEY2",
+                            size: "4"
+                        },
+                        {
+                            name: "ROT_CREATOR_AUTH_STATE_SPX_KEY3",
+                            size: "4"
+                        },
+                   ]
+                   desc: '''
+                         This OTP partition is used to capture the state of
+                         each key slot. Each key can be in one of the
+                         following states: BLANK, ENABLED, DISABLED. The
+                         encoded values are such that transitions between
+                         BLANK -> ENABLED ->  DISABLED are possible without
+                         causing ECC errors (this is a mechanism similar to
+                         how we manage life cycle state transitions). The
+                         partition is left unlocked to allow STATE updates in
+                         the field. The ROM_EXT is required to lock access to
+                         the OTP Direct Access Interface to prevent DoS
+                         attacks from malicious code executing on Silicon
+                         Owner partitions. DAI write locking is available in
+                         EarlGrey.
+                         '''
+        }
+        {
+            name:       "HW_CFG0",
+            variant:    "Buffered",
+            secret:     false,
+            sw_digest:  false,
+            hw_digest:  true,
+            write_lock: "Digest",
+            read_lock:  "None",
+            key_sel:    "NoKey",
+            integrity:  true,
+            bkout_type: true,
+            items: [
+                {
+                    name:        "DEVICE_ID",
+                    size:        "32",
+                    // Default value to be output in case partition has not
+                    // initialized or is in error state. If not specified,
+                    // a value of '0 will be used.
+                    inv_default: "<random>",
+                },
+                {
+                    name:        "MANUF_STATE",
+                    size:        "32",
+                    inv_default: "<random>",
+                },
+            ],
+            desc: '''Hardware configuration 0 partition.
+            This contains
+            - DEVICE_ID: Unique device identifier.
+            - MANUF_STATE: Vector for capturing the manufacturing status.
+            '''
+        }
+        {
+            name:       "HW_CFG1",
+            variant:    "Buffered",
+            secret:     false,
+            sw_digest:  false,
+            hw_digest:  true,
+            write_lock: "Digest",
+            read_lock:  "None",
+            key_sel:    "NoKey",
+            integrity:  true,
+            bkout_type: true,
+            items: [
+                {
+                    name:        "EN_SRAM_IFETCH",
+                    size:        "1",
+                    ismubi:      true,
+                    inv_default: false
+                },
+                {
+                    name:        "EN_CSRNG_SW_APP_READ",
+                    size:        "1",
+                    ismubi:      true,
+                    inv_default: false
+                },
+                {
+                    name:        "DIS_RV_DM_LATE_DEBUG",
+                    size:        "1",
+                    ismubi:      true,
+                    inv_default: false
+                },
+            ],
+            desc: '''Hardware configuration 1 partition.
+            This contains
+            - EN_SRAM_IFETCH: Enable / disable execute from SRAM CSR switch.
+            - EN_CSRNG_SW_APP_READ: This input efuse is used to enable access to the
+              NIST internal state per instance.
+            - DIS_RV_DM_LATE_DEBUG: Setting this to true bypasses the late debug
+              enablement of RV_DM in the DEV life cycle state.
+            '''
+        }
+        {
+            name:       "SECRET0",
+            variant:    "Buffered",
+            secret:     true,
+            sw_digest:  false,
+            hw_digest:  true,
+            write_lock: "Digest",
+            read_lock:  "Digest",
+            key_sel:    "Secret0Key",
+            integrity:  true,
+            bkout_type: false,
+            items: [
+                {
+                    name: "TEST_UNLOCK_TOKEN",
+                    // This will generate a random default to be output in
+                    // case partition has not initialized or is in error state.
+                    // If not specified, a value of '0 will be used.
+                    inv_default: "<random>",
+                    size: "16"
+                }
+                {
+                    name: "TEST_EXIT_TOKEN",
+                    inv_default: "<random>",
+                    size: "16"
+                }
+            ],
+            desc: '''Secret partition 0.
+            This contains TEST lifecycle unlock tokens.
+            '''
+        }
+        {
+            name:       "SECRET1",
+            variant:    "Buffered",
+            secret:     true,
+            sw_digest:  false,
+            hw_digest:  true,
+            write_lock: "Digest",
+            read_lock:  "Digest",
+            key_sel:    "Secret1Key",
+            integrity:  true,
+            bkout_type: false,
+            items: [
+                {
+                    name: "FLASH_ADDR_KEY_SEED",
+                    inv_default: "<random>",
+                    size: "32"
+                }
+                {
+                    name: "FLASH_DATA_KEY_SEED",
+                    inv_default: "<random>",
+                    size: "32"
+                }
+                {
+                    name: "SRAM_DATA_KEY_SEED",
+                    inv_default: "<random>",
+                    size: "16"
+                }
+            ],
+            desc: '''Secret partition 1.
+            This contains SRAM and flash scrambling keys.
+            '''
+        }
+        {
+            name:       "SECRET2",
+            variant:    "Buffered",
+            secret:     true,
+            sw_digest:  false,
+            hw_digest:  true,
+            write_lock: "Digest",
+            read_lock:  "Digest",
+            key_sel:    "Secret2Key",
+            integrity:  true,
+            bkout_type: false,
+            items: [
+                {
+                    name: "RMA_TOKEN",
+                    inv_default: "<random>",
+                    size: "16"
+                }
+                {
+                    name: "CREATOR_ROOT_KEY_SHARE0",
+                    inv_default: "<random>",
+                    size: "32",
+                    iskeymgr_creator: true
+                }
+                {
+                    name: "CREATOR_ROOT_KEY_SHARE1",
+                    inv_default: "<random>",
+                    size: "32"
+                    iskeymgr_creator: true
+                }
+            ],
+            desc: '''Secret partition 2.
+            This contains RMA unlock token, creator root key, and creator seed.
+            '''
+        }
+        {
+            name:       "LIFE_CYCLE",
+            variant:    "LifeCycle",
+            secret:     false,
+            sw_digest:  false,
+            hw_digest:  false,
+            write_lock: "None",
+            read_lock:  "None",
+            key_sel:    "NoKey",
+            integrity:  true,
+            bkout_type: false,
+            items: [
+                // The life cycle transition count is specified
+                // first such that any programming attempt of the life cycle
+                // partition through the LCI will always write the transition
+                // counter words first when programming an updated state vector.
+                // This is an additional safeguard, to the sequencing in the
+                // life cycle controller to ensure that the counter is always written
+                // before any state update. I.e., the life cycle controller
+                // already splits the counter and state updates into two
+                // supsequent requests through the LCI, where the first request
+                // only contains the updated transition counter, and the second
+                // request the updated transition counter and state.
+                {
+                    name: "LC_TRANSITION_CNT",
+                    inv_default: "<random>",
+                    size: "48"
+                }
+                {
+                    name: "LC_STATE",
+                    inv_default: "<random>",
+                    size: "40"
+                }
+            ],
+            desc: '''Lifecycle partition.
+            This contains lifecycle transition count and state. This partition
+            cannot be locked since the life cycle state needs to advance to RMA
+            in-field. Note that while this partition is not marked secret, it
+            is not readable nor writeable via the DAI. Only the LC controller
+            can access this partition, and even via the LC controller it is not
+            possible to read the raw manufacturing life cycle state in encoded
+            form, since that encoding is considered a netlist secret. The LC
+            controller only exposes a decoded version of this state.
+            '''
+        }
+    ]
+}
