@@ -6,6 +6,7 @@
 import argparse
 import json
 import logging as log
+import platform
 import re
 import shutil
 import subprocess
@@ -23,6 +24,11 @@ ASSET_PREFIXES = {
     "gcc-only": "lowrisc-toolchain-gcc-rv32imcb-",
 }
 ASSET_SUFFIX = ".tar.xz"
+ASSET_ARCH = {
+    # arch : arch_str
+    "arm64" : "aarch64",
+    "x86_64" : "x86_64"
+}
 RELEASES_URL_BASE = 'https://api.github.com/repos/lowRISC/lowrisc-toolchains/releases'
 
 INSTALL_DIR = '/tools/riscv'
@@ -37,7 +43,14 @@ FILE_PATTERNS_TO_REWRITE = [
 
 def get_available_toolchain_info(version, kind):
     assert kind in ASSET_PREFIXES
-
+    
+    pform = platform.platform()
+    arch_str = ""
+    for k in ASSET_ARCH.keys():
+        if k in pform:
+            arch_str = ASSET_ARCH[k]
+    assert arch_str != ""
+    
     if version == 'latest':
         releases_url = '%s/%s' % (RELEASES_URL_BASE, version)
     else:
@@ -48,7 +61,7 @@ def get_available_toolchain_info(version, kind):
 
     for asset in release_info["assets"]:
         if (asset["name"].startswith(ASSET_PREFIXES[kind]) and
-                asset["name"].endswith(ASSET_SUFFIX)):
+                asset["name"].endswith(ASSET_SUFFIX) and arch_str in asset["name"]):
             return {
                 'download_url': asset['browser_download_url'],
                 'name': asset['name'],
